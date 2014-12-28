@@ -80,7 +80,7 @@ Inline::Filters::Ragel - Run ragel when compiling your Inline modules
 
     use Inline::Filters::Ragel;
 
-    use Inline C => <<'END', filters => [ ragel ];
+    use Inline C => <<'END', FILTERS => [ ragel ];
       // ragel/C code goes here
     END
 
@@ -88,9 +88,16 @@ Inline::Filters::Ragel - Run ragel when compiling your Inline modules
 
 This module exports one "factory" function, C<ragel>. This function returns an anonymous function that accepts a string input, pre-processes it with the C<ragel> binary, and returns the output. The C<ragel> "factory" function can optionally take a string or multiple strings which will be passed along to the ragel binary. You will need to do this if you are compiling a language other than the default (C/C++), or if you wish to change the ragel state-machine compilation type.
 
-Note that you will need to download and install L<Ragel|http://www.colm.net/open-source/ragel/> before this module will work. It is my hope that modules will not require ragel at distribution time since we now have L<Inline::Module> (but I haven't tested that yet).
+Note that you will need to download and install L<Ragel|http://www.colm.net/open-source/ragel/> before this module will work.
 
 This module itself does not actually depend on any L<Inline> stuff so it may be useful as a stand-alone C<ragel> invoker module.
+
+=head1 DEBUGGING
+
+If you set the C<INLINE_FILTERS_RAGEL_DEBUG> environment variable, the filter will produce the following output and will not clean-up the directory mentioned:
+
+    Inline::Filters::Ragel args: $VAR1 = '-C -G2';
+      --> See input/output files in /tmp/3QJBxyCy9m
 
 =head1 FULL EXAMPLE
 
@@ -98,22 +105,22 @@ As an example, here is the definition of an C<is_valid_utf8> function which uses
 
     use Inline::Filters::Ragel;
 
-    use Inline C => <<'END', FILTERS => [ ragel('-G2') ];
+    use Inline C => <<'END', FILTERS => [ ragel('-C -G2') ];
       %%{
         machine utf8_checker;
 
         ## Adapted from: http://www.w3.org/International/questions/qa-forms-utf-8
 
-        utf8_codepoint = (0x09 | 0x0A | 0x0D | 0x20..0x7E)            | # ASCII
-                         (0xC2..0xDF 0x80..0xBF)                      | # non-overlong 2-byte
-                         (0xE0 0xA0..0xBF 0x80..0xBF)                 | # excluding overlongs
-                         ((0xE1..0xEC | 0xEE | 0xEF) (0x80..0xBF){2}) | # straight 3-byte
-                         (0xED 0x80..0x9F 0x80..0xBF)                 | # excluding surrogates
-                         (0xF0 0x90..0xBF (0x80..0xBF){2})            | # planes 1-3
-                         (0xF1..0xF3 (0x80..0xBF){3})                 | # planes 4-15
-                         (0xF4 0x80..0x8F (0x80..0xBF){2});             # plane 16
+        codepoint = (0x09 | 0x0A | 0x0D | 0x20..0x7E)            | # ASCII
+                    (0xC2..0xDF 0x80..0xBF)                      | # non-overlong 2-byte
+                    (0xE0 0xA0..0xBF 0x80..0xBF)                 | # excluding overlongs
+                    ((0xE1..0xEC | 0xEE | 0xEF) (0x80..0xBF){2}) | # straight 3-byte
+                    (0xED 0x80..0x9F 0x80..0xBF)                 | # excluding surrogates
+                    (0xF0 0x90..0xBF (0x80..0xBF){2})            | # planes 1-3
+                    (0xF1..0xF3 (0x80..0xBF){3})                 | # planes 4-15
+                    (0xF4 0x80..0x8F (0x80..0xBF){2});             # plane 16
 
-        main := utf8_codepoint*;
+        main := codepoint*;
 
         write data;
       }%%
@@ -138,6 +145,10 @@ As an example, here is the definition of an C<is_valid_utf8> function which uses
         return 1;
       }
     END
+
+=head1 BUGS
+
+Modules should not require ragel at distribution time if L<Inline::Module> is used. However, in the examples above, L<Inline::Filters::Ragel> will need to be installed which implies that ragel must be installed too. I haven't documented how to avoid that yet, but it's an ugly C<sub> containing a C<require> and so on. Ideally there would be some kind of filter plugin protocol in L<Inline> and/or the individual ISLMs that would make it easy to only pull in at build time.
 
 =head1 SEE ALSO
 
