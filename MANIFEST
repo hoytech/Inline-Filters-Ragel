@@ -1,0 +1,6 @@
+Changes
+lib/Inline/Filters/Ragel.pm
+Makefile.PL
+MANIFEST
+MANIFEST.SKIP
+t/basic.t
