@@ -1,6 +1,6 @@
 package Inline::Filters::Ragel;
 
-our $VERSION = '0.100';
+our $VERSION = '0.101';
 
 use strict;
 
