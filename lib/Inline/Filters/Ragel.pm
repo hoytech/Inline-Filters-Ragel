@@ -9,11 +9,11 @@ use File::Temp;
 
 require Exporter;
 use base 'Exporter';
-our @EXPORT = qw(ragel);
+our @EXPORT = qw(ragel); ## filters protocol doesn't require export: this is just for back-compat
 
 
 
-sub ragel {
+sub filter {
   my $args;
 
   if (@_ == 1) {
@@ -64,6 +64,10 @@ sub ragel {
   };
 }
 
+
+*ragel = \&filter; ## back-compat
+
+
 1;
 
 
@@ -80,17 +84,17 @@ Inline::Filters::Ragel - Run ragel when compiling your Inline modules
 
     use Inline::Filters::Ragel;
 
-    use Inline C => <<'END', FILTERS => [ ragel ];
+    use Inline C => <<'END', FILTERS => [ [ Ragel => '-C' ] ];
       // ragel/C code goes here
     END
 
 =head1 DESCRIPTION
 
-This module exports one "factory" function, C<ragel>. This function returns an anonymous function that accepts a string input, pre-processes it with the C<ragel> binary, and returns the output. The C<ragel> "factory" function can optionally take a string or multiple strings which will be passed along to the ragel binary. You will need to do this if you are compiling a language other than the default (C/C++), or if you wish to change the ragel state-machine compilation type.
+This module is designed to be used with the L<Inline> modules that provide the C<FILTERS> feature. It provides a "factory" function, C<filters>. This function returns an anonymous function that accepts a string input, pre-processes it with the C<ragel> binary, and returns the output. The C<filters> "factory" function can optionally take a string or multiple strings which will be passed along to the ragel binary. You will need to do this if you are compiling a language other than the default (C/C++), or if you wish to change the ragel state-machine compilation type.
 
-Note that you will need to download and install L<Ragel|http://www.colm.net/open-source/ragel/> before this module will work.
+B<NOTE>: You will need to download and install L<Ragel|http://www.colm.net/open-source/ragel/> before this module will work. Additionally, for the C<FILTERS> syntax in the synopsis you will need L<Inline::C> version 0.72 or higher.
 
-This module itself does not actually depend on any L<Inline> stuff so it may be useful as a stand-alone C<ragel> invoker module.
+This module itself does not actually depend on any L<Inline> stuff so it may be useful as a stand-alone ragel invoker module. Note that an alias for C<filters> called C<ragel> is exported for backwards compatibility.
 
 =head1 DEBUGGING
 
@@ -105,7 +109,7 @@ As an example, here is the definition of an C<is_valid_utf8> function which uses
 
     use Inline::Filters::Ragel;
 
-    use Inline C => <<'END', FILTERS => [ ragel('-C -G2') ];
+    use Inline C => <<'END', FILTERS => [ [ Ragel => '-C -G2' ] ];
       %%{
         machine utf8_checker;
 
@@ -146,9 +150,6 @@ As an example, here is the definition of an C<is_valid_utf8> function which uses
       }
     END
 
-=head1 BUGS
-
-Modules should not require ragel at distribution time if L<Inline::Module> is used. However, in the examples above, L<Inline::Filters::Ragel> will need to be installed which implies that ragel must be installed too. I haven't documented how to avoid that yet, but it's an ugly C<sub> containing a C<require> and so on. Ideally there would be some kind of filter plugin protocol in L<Inline> and/or the individual ISLMs that would make it easy to only pull in at build time.
 
 =head1 SEE ALSO
 
